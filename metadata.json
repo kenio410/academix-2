@@ -1,0 +1,6 @@
+{
+  "name": "Remix: Student Results Manager",
+  "description": "Professional Excel-like student results tracking system with automated grading, aggregate calculation, and division placement logic. Supports multiple classes, sessions, and data persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
