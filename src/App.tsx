@@ -383,16 +383,18 @@ export default function App() {
     }
   };
 
-  const handleSaveAs = () => {
-    if (!currentSession) return;
+  const handleDuplicateSession = (id?: string) => {
+    const sessionToDuplicate = id ? sessions.find(s => s.id === id) : currentSession;
+    if (!sessionToDuplicate) return;
+    
     setPromptDialog({
       isOpen: true,
-      title: 'Save Session As',
-      message: 'Enter a name for the new session file:',
-      defaultValue: `${currentSession.name} (Copy)`,
+      title: 'Save Session As (Duplicate)',
+      message: `Enter a name for the duplicated session "${sessionToDuplicate.name}":`,
+      defaultValue: `${sessionToDuplicate.name} (Copy)`,
       onConfirm: async (newName) => {
         const newSession: Session = {
-          ...currentSession,
+          ...sessionToDuplicate,
           id: crypto.randomUUID(),
           name: newName,
           createdAt: Date.now(),
@@ -400,7 +402,7 @@ export default function App() {
         await db.sessions.add(newSession);
         setSessions(prev => [newSession, ...prev]);
         handleOpenSession(newSession.id);
-        toast.success(`Session saved as "${newName}"`);
+        toast.success(`Session duplicated as "${newName}"`);
       }
     });
   };
@@ -1312,6 +1314,7 @@ export default function App() {
                     handleOpenSession={handleOpenSession}
                     handleCloseSession={handleCloseSession}
                     handleDeleteSession={handleDeleteSession}
+                    handleDuplicateSession={handleDuplicateSession}
                     handleMoveToFolder={handleMoveToFolder}
                     folders={folders}
                     activeClassIndex={activeClassIndex}
@@ -1373,6 +1376,7 @@ export default function App() {
                     }}
                     onDelete={(e) => handleDeleteSession(session.id, e)}
                     onRename={() => handleRenameSession(session.id)}
+                    onDuplicate={() => handleDuplicateSession(session.id)}
                     onMoveToFolder={(fid) => handleMoveToFolder(session.id, fid)}
                     onRenameFolder={handleRenameFolder}
                     onDeleteFolder={handleDeleteFolder}
@@ -1683,6 +1687,12 @@ export default function App() {
                       className="w-full px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors pl-8"
                     >
                       <Edit2 size={14} className="text-slate-400" /> Rename Session
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDuplicateSession(currentSession.id); setShowClassMenu(null); }}
+                      className="w-full px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors pl-8"
+                    >
+                      <Copy size={14} className="text-slate-400" /> Save Session As (Duplicate)
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDeleteSession(currentSession.id); setShowClassMenu(null); }}
@@ -2096,6 +2106,7 @@ interface FolderSidebarItemProps {
   handleOpenSession: (id: string) => void | Promise<void>;
   handleCloseSession: (e: React.MouseEvent, id: string) => void | Promise<void>;
   handleDeleteSession: (id: string, e: React.MouseEvent) => void | Promise<void>;
+  handleDuplicateSession: (id: string) => void | Promise<void>;
   handleMoveToFolder: (sessionId: string, folderId: string | null) => void | Promise<void>;
   folders: Folder[];
   activeClassIndex: number;
@@ -2119,6 +2130,7 @@ const FolderSidebarItem: React.FC<FolderSidebarItemProps> = ({
   handleOpenSession,
   handleCloseSession,
   handleDeleteSession,
+  handleDuplicateSession,
   handleRenameSession,
   handleMoveToFolder,
   folders,
@@ -2247,6 +2259,7 @@ const FolderSidebarItem: React.FC<FolderSidebarItemProps> = ({
                 onToggleExpand={() => onToggleSessionExpand(session.id)}
                 onDelete={(e) => handleDeleteSession(session.id, e)}
                 onRename={() => handleRenameSession(session.id)}
+                onDuplicate={() => handleDuplicateSession(session.id)}
                 onMoveToFolder={(fid) => handleMoveToFolder(session.id, fid)}
                 onRenameFolder={onRenameFolder}
                 onDeleteFolder={onDeleteFolder}
@@ -2273,6 +2286,7 @@ interface SessionSidebarItemProps {
   onOpen: () => void | Promise<void>;
   onToggleExpand: () => void;
   onRename: () => void | Promise<void>;
+  onDuplicate: () => void | Promise<void>;
   onDelete: (e: React.MouseEvent) => void | Promise<void>;
   onMoveToFolder: (folderId: string | null) => void | Promise<void>;
   onRenameFolder?: (id: string) => void | Promise<void>;
@@ -2294,6 +2308,7 @@ const SessionSidebarItem: React.FC<SessionSidebarItemProps> = ({
   onOpen, 
   onToggleExpand, 
   onRename,
+  onDuplicate,
   onDelete,
   onMoveToFolder,
   onRenameFolder,
@@ -2397,6 +2412,13 @@ const SessionSidebarItem: React.FC<SessionSidebarItemProps> = ({
               </div>
               
               <div className="px-1.5 space-y-0.5">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDuplicate(); setShowOptions(false); }}
+                  className="w-full px-3 py-2 text-xs text-left rounded-lg hover:bg-indigo-600 hover:text-white text-slate-300 flex items-center gap-3 transition-all group"
+                >
+                  <Copy size={13} className="text-indigo-400 group-hover:text-white transition-colors" /> 
+                  <span className="font-medium">Save Session As (Duplicate)</span>
+                </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); onRename(); setShowOptions(false); }}
                   className="w-full px-3 py-2 text-xs text-left rounded-lg hover:bg-indigo-600 hover:text-white text-slate-300 flex items-center gap-3 transition-all group"
